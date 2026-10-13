@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阅读探险 · Reading Quest</title>
+<meta name="description" content="给孩子的游戏化阅读探险：点亮主题、收集文体印章，在故事里拓宽阅读边界。无需注册，进度保存在本设备。">
+<meta property="og:title" content="阅读探险 · Reading Quest">
+<meta property="og:description" content="给孩子的游戏化阅读探险：点亮主题、收集文体印章，在故事里拓宽阅读边界。">
+<meta property="og:type" content="website">
+<link href="./fonts/fonts.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --bg-2: #131313;
+  --bg-3: #1c1a18;
+  --fg: #f0ede8;
+  --fg-2: #a8a39c;
+  --fg-3: #6b6660;
+  --accent: #c4453b;
+  --accent-glow: rgba(196, 69, 59, 0.45);
+  --accent-2: #8a3027;
+  --border: #2a2825;
+  --border-2: #3a3633;
+
+  --font-serif: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', 'NSimSun', serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+
+  --r: 4px;
+  --r-card: 8px;
+  --r-full: 999px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.85;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.02em;
+}
+
+body { display: flex; flex-direction: column; }
+
+/* === 顶部导航 === */
+#topbar {
+  display: none;
+  position: sticky;
+  top: 0;
+  background: rgba(10, 10, 10, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 32px;
+  z-index: 50;
+}
+#topbar.visible { display: flex; align-items: center; justify-content: space-between; }
+#topbar .nav-left, #topbar .nav-right { display: flex; align-items: center; gap: 18px; }
+#topbar .brand { font-family: var(--font-serif); font-size: 13px; letter-spacing: 0.3em; color: var(--fg-2); }
+#topbar .user-chip { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-2); letter-spacing: 0.1em; }
+#topbar .user-dot { width: 6px; height: 6px; background: var(--accent); border-radius: var(--r-full); box-shadow: 0 0 6px var(--accent-glow); }
+#topbar .icon-btn { background: none; border: none; color: var(--fg-2); cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center; border-radius: var(--r); transition: color .15s; }
+#topbar .icon-btn:hover { color: var(--accent); }
+#topbar .icon-btn.active { color: var(--accent); }
+#topbar .icon-btn svg { width: 18px; height: 18px; stroke-linecap: round; stroke-linejoin: round; }
+
+/* === 视图通用 === */
+.view { display: none; min-height: 100vh; padding: 48px 32px; }
+.view.active { display: block; }
+
+/* === 启动屏 === */
+#view-launch {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 64px 32px;
+}
+#view-launch.active { display: flex; }
+.launch-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 56px;
+  letter-spacing: 0.18em;
+  color: var(--fg);
+  margin-bottom: 12px;
+}
+.launch-sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.5em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 80px;
+}
+.launch-label {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  letter-spacing: 0.6em;
+  color: var(--fg-3);
+  margin-bottom: 32px;
+  padding-left: 0.6em;
+}
+.launch-note {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  color: var(--fg-3);
+  margin-top: 56px;
+  text-align: center;
+  padding-left: 0.35em;
+}
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  max-width: 640px;
+  width: 100%;
+}
+.user-slot {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 28px 16px 22px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .18s;
+}
+.user-slot:hover { border-color: var(--accent); background: var(--bg-3); transform: translateY(-2px); }
+.user-slot .avatar {
+  width: 56px; height: 56px;
+  margin: 0 auto 14px;
+  border-radius: var(--r-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--fg);
+  border: 1px solid var(--border-2);
+}
+.user-slot .name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-2);
+  letter-spacing: 0.15em;
+}
+.user-slot.add .avatar { background: transparent; color: var(--fg-3); font-size: 28px; font-weight: 400; }
+.user-slot.add:hover .avatar { color: var(--accent); }
+
+/* === 探索地图 === */
+#view-map { padding: 48px 32px 96px; }
+.map-header {
+  max-width: 960px;
+  margin: 0 auto 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.map-header h2 { font-family: var(--font-serif); font-weight: 700; font-size: 26px; letter-spacing: 0.2em; }
+.map-progress { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); letter-spacing: 0.25em; }
+.map-progress strong { color: var(--accent); font-weight: 500; font-size: 14px; }
+
+.star-map {
+  max-width: 960px;
+  margin: 0 auto;
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(196,69,59,0.05), transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(196,69,59,0.04), transparent 55%),
+    var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+}
+.star-map svg { width: 100%; height: 100%; display: block; }
+.star-node circle.outer { fill: none; stroke: var(--border-2); stroke-width: 1.2; transition: all .2s; }
+.star-node circle.inner { fill: var(--bg-3); stroke: var(--border-2); stroke-width: 1; transition: all .2s; }
+.star-node text.region-name {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 500;
+  fill: var(--fg-2);
+  text-anchor: middle;
+  letter-spacing: 0.2em;
+}
+.star-node text.region-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--fg-3);
+  text-anchor: middle;
+  letter-spacing: 0.15em;
+}
+.star-node { cursor: pointer; }
+.star-node:hover circle.outer { stroke: var(--accent); }
+.star-node.lit circle.outer { stroke: var(--accent); filter: drop-shadow(0 0 8px var(--accent-glow)); }
+.star-node.lit circle.inner { fill: var(--accent); stroke: var(--accent); }
+.star-node.lit text.region-name { fill: var(--fg); }
+
+.map-legend {
+  max-width: 960px;
+  margin: 24px auto 0;
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  letter-spacing: 0.18em;
+}
+.map-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.map-legend .dot { width: 7px; height: 7px; border-radius: var(--r-full); }
+.map-legend .dot.unlit { background: var(--border-2); }
+.map-legend .dot.lit { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+
+.region-panel { max-width: 960px; margin: 40px auto 0; display: none; }
+.region-panel.open { display: block; animation: fadeUp .35s ease-out; }
+.region-panel h3 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--fg-2);
+  letter-spacing: 0.25em;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.article-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 4px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: padding .15s, background .15s;
+}
+.article-row:hover { padding-left: 14px; padding-right: 14px; background: var(--bg-2); }
+.article-row .meta { flex: 1; }
+.article-row .title { font-family: var(--font-serif); font-size: 17px; color: var(--fg); margin-bottom: 4px; }
+.article-row .form { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); letter-spacing: 0.25em; }
+.article-row .word-count { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); letter-spacing: 0.15em; }
+.article-row.read .title { color: var(--fg-2); }
+.article-row.read .title::after { content: ' · 已读'; color: var(--accent); font-size: 12px; font-family: var(--font-mono); letter-spacing: 0.15em; }
+
+/* === 文章详情 === */
+#view-article { padding: 48px 32px 96px; }
+.article-container { max-width: 680px; margin: 0 auto; }
+.article-meta {
+  display: flex;
+  gap: 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  letter-spacing: 0.2em;
+  margin-bottom: 24px;
+}
+.article-meta .form { color: var(--accent); }
+.article-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 36px;
+  letter-spacing: 0.12em;
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.article-body {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 2;
+  color: var(--fg);
+  letter-spacing: 0.04em;
+}
+.article-body p { margin-bottom: 1.3em; }
+
+.article-actions {
+  margin: 56px 0 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.btn-light {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-serif);
+  font-size: 13px;
+  letter-spacing: 0.35em;
+  padding: 13px 32px;
+  cursor: pointer;
+  border-radius: var(--r);
+  transition: all .15s;
+  padding-left: calc(32px + 0.35em);
+}
+.btn-light:hover { background: var(--accent); color: var(--fg); }
+.btn-light.lit { background: var(--accent); color: var(--fg); cursor: default; opacity: 0.7; }
+
+.related { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border); }
+.related-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-3);
+  letter-spacing: 0.4em;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.related-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); }
+.related-item {
+  background: var(--bg);
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background .15s, padding .15s;
+}
+.related-item:hover { background: var(--bg-2); padding-left: 24px; }
+.related-item .title { font-family: var(--font-serif); font-size: 15px; color: var(--fg); margin-bottom: 2px; }
+.related-item .form { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); letter-spacing: 0.25em; }
+.related-item .arrow { color: var(--fg-3); font-family: var(--font-mono); font-size: 14px; }
+.related-item:hover .arrow { color: var(--accent); }
+
+/* === 探索榜 === */
+#view-ranking { padding: 48px 32px; }
+.ranking-container { max-width: 720px; margin: 0 auto; }
+.page-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: 0.22em;
+  margin-bottom: 8px;
+}
+.page-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  letter-spacing: 0.25em;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.rank-row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto auto;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.rank-row .num { font-family: var(--font-mono); font-size: 13px; color: var(--fg-3); letter-spacing: 0.1em; }
+.rank-row.top .num { color: var(--accent); font-size: 17px; font-weight: 500; }
+.rank-row .name { font-family: var(--font-serif); font-size: 17px; color: var(--fg); }
+.rank-row.top .name { color: var(--accent); }
+.rank-row .stats { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); letter-spacing: 0.18em; }
+.rank-row .stats strong { color: var(--fg); font-weight: 500; }
+.rank-row.me {
+  background: linear-gradient(90deg, rgba(196,69,59,0.07), transparent 70%);
+  padding-left: 14px;
+  padding-right: 14px;
+  margin-left: -14px;
+  margin-right: -14px;
+  border-radius: var(--r);
+}
+
+/* === 护照 === */
+#view-passport { padding: 48px 32px; }
+.passport-container { max-width: 720px; margin: 0 auto; }
+.stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+.stamp { background: var(--bg); padding: 32px 16px; text-align: center; transition: background .2s; }
+.stamp .seal {
+  width: 64px; height: 64px;
+  margin: 0 auto 14px;
+  border: 1.5px solid var(--border-2);
+  border-radius: var(--r-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--fg-3);
+  transition: all .2s;
+}
+.stamp.collected { background: rgba(196,69,59,0.04); }
+.stamp.collected .seal {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(196,69,59,0.08);
+  box-shadow: 0 0 12px rgba(196,69,59,0.2);
+}
+.stamp .form-name { font-family: var(--font-serif); font-size: 13px; color: var(--fg-2); letter-spacing: 0.25em; margin-bottom: 4px; }
+.stamp .count { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); letter-spacing: 0.15em; }
+.stamp.collected .count { color: var(--accent); }
+
+.passport-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); }
+.passport-row {
+  background: var(--bg);
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.passport-row .label { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); letter-spacing: 0.25em; }
+.passport-row .value { font-family: var(--font-serif); font-size: 15px; color: var(--fg); margin-bottom: 2px; }
+.passport-row.empty { justify-content: center; color: var(--fg-3); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.3em; padding: 32px; }
+
+/* === 添加用户模态 === */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,10,0.88);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-overlay.open { display: flex; animation: fadeIn .2s; }
+.modal {
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-card);
+  padding: 36px 28px;
+  max-width: 340px;
+  width: calc(100% - 48px);
+}
+.modal h3 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.2em;
+  margin-bottom: 20px;
+  color: var(--fg);
+}
+.modal input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  padding: 11px 14px;
+  margin-bottom: 18px;
+  border-radius: var(--r);
+  outline: none;
+  letter-spacing: 0.1em;
+  transition: border-color .15s;
+}
+.modal input:focus { border-color: var(--accent); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-btn {
+  background: transparent;
+  border: 1px solid var(--border-2);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  padding: 10px 18px;
+  cursor: pointer;
+  border-radius: var(--r);
+  transition: all .15s;
+}
+.modal-btn:hover { color: var(--fg); border-color: var(--fg-3); }
+.modal-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--fg); }
+.modal-btn.primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+
+/* === 响应式 === */
+@media (max-width: 640px) {
+  html, body { font-size: 16px; }
+  .view { padding: 32px 18px; }
+  #topbar { padding: 12px 18px; gap: 8px; }
+  #topbar .nav-left, #topbar .nav-right { gap: 10px; }
+  #topbar .brand { display: none; }
+  .launch-title { font-size: 38px; }
+  .launch-sub { margin-bottom: 56px; }
+  .article-title { font-size: 26px; }
+  .article-body { font-size: 16px; line-height: 1.9; }
+  .map-header h2 { font-size: 20px; }
+  .stamp-grid { grid-template-columns: repeat(2, 1fr); }
+  .rank-row { grid-template-columns: 28px 1fr auto; gap: 12px; padding: 14px 4px; }
+  .rank-row .stats { font-size: 10px; }
+  .rank-row .name { font-size: 15px; }
+  .page-title { font-size: 22px; }
+}
+
+/* === 动效 === */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.view.active > * { animation: fadeUp .45s ease-out both; }
+.view.active > *:nth-child(2) { animation-delay: .06s; }
+.view.active > *:nth-child(3) { animation-delay: .12s; }
+.view.active > *:nth-child(4) { animation-delay: .18s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<nav id="topbar">
+  <div class="nav-left">
+    <button class="icon-btn" id="btn-home" title="返回首页">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12L12 4l9 8M5 10v10h14V10"></path></svg>
+    </button>
+    <span class="brand">阅 读 探 险</span>
+  </div>
+  <div class="nav-right">
+    <span class="user-chip"><span class="user-dot"></span><span id="current-user-name">—</span></span>
+    <button class="icon-btn" id="btn-map" title="探索地图">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3v18"></path></svg>
+    </button>
+    <button class="icon-btn" id="btn-ranking" title="探索榜">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20V11M10 20V4M16 20V14M22 20H2"></path></svg>
+    </button>
+    <button class="icon-btn" id="btn-passport" title="护照">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h10l3 3v15H6z"></path><path d="M9 9h7M9 13h7M9 17h4"></path></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- 视图1：启动屏 -->
+<section id="view-launch" class="view active">
+  <h1 class="launch-title">阅读探险</h1>
+  <div class="launch-sub">Reading · Quest</div>
+  <div class="launch-label">选 择 旅 人</div>
+  <div class="users-grid" id="users-grid"><div class="user-slot add"><div class="avatar">+</div><div class="name">新旅人</div></div></div>
+  <div class="launch-note">无 需 注 册 · 进 度 自 动 保 存 在 本 设 备</div>
+</section>
+
+<!-- 视图2：探索地图 -->
+<section id="view-map" class="view">
+  <div class="map-header">
+    <h2>探 险 之 图</h2>
+    <div class="map-progress">已 点 亮 <strong id="lit-count">0</strong> / <span id="lit-total"></span></div>
+  </div>
+  <div class="star-map">
+    <svg id="star-svg" viewBox="0 0 720 450" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+  <div class="map-legend">
+    <span><span class="dot unlit"></span>未点亮</span>
+    <span><span class="dot lit"></span>已点亮</span>
+    <span>点 击 节 点 查 看 文 章</span>
+  </div>
+  <div class="region-panel" id="region-panel">
+    <h3 id="region-title"></h3>
+    <div id="region-articles"></div>
+  </div>
+</section>
+
+<!-- 视图3：文章详情 -->
+<section id="view-article" class="view">
+  <div class="article-container" id="article-container"></div>
+</section>
+
+<!-- 视图4：探索榜 -->
+<section id="view-ranking" class="view">
+  <div class="ranking-container">
+    <h2 class="page-title">探 索 榜</h2>
+    <div class="page-sub">本 机 排 行 · 按 已 点 亮 主 题 数 · 比 广 度 不 比 速 度</div>
+    <div id="ranking-list"></div>
+  </div>
+</section>
+
+<!-- 视图5：护照 -->
+<section id="view-passport" class="view">
+  <div class="passport-container">
+    <h2 class="page-title">旅 人 护 照</h2>
+    <div class="page-sub">收 集 五 种 文 体 印 章</div>
+    <div class="stamp-grid" id="stamp-grid"></div>
+    <div class="passport-list" id="passport-list"></div>
+  </div>
+</section>
+
+<!-- 添加用户模态 -->
+<div class="modal-overlay" id="add-user-modal">
+  <div class="modal">
+    <h3>新 旅 人</h3>
+    <input type="text" id="new-user-input" placeholder="输入名字" maxlength="6" autocomplete="off">
+    <div class="modal-actions">
+      <button class="modal-btn" id="cancel-add">取消</button>
+      <button class="modal-btn primary" id="confirm-add">出 发</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 文章数据 · 四大主题：冒险 / 孤独 / 勇气 / 秘密
+// 5种文体覆盖：小说节选 / 历史 / 科普 / 诗歌 / 传记
+// 关联网络：每篇3条 related，构成探索网
+// ============================================================
+const ARTICLES = [
+  {
+    id: 'a1', title: '鲁滨逊登岸', form: '小说节选', theme: 'adventure', wordCount: 714,
+    content: `浪头把我卷过礁石，水下翻搅得不知上下。肺里的气快要耗尽时，脚趾触到一处硬底——是沙。
+
+我跪着站起来，海水从胸口退到腰，再退到膝。一个浪从背后推来，我又扑进水里，呛了两口咸的。再站稳时，浪已经小了。我跌跌撞撞走上岸，扑倒在湿沙上，呕吐着咸水，吐到只剩干呕。
+
+躺了很久。天阴着，海风刮得脸疼。衣服贴在身上，像一层冰凉的皮。
+
+回头望去，那艘载我十一天的船只剩桅杆的影子，孤零零戳在水面上。船员们不知去向——也许沉了，也许被浪打散在更远的地方。我喊了几声，没有人应。海把声音收走了，连回音都不给。
+
+我清点了自己。没有食物，没有淡水，没有火。口袋里只有一把被盐浸透的小刀，刀柄上的铜钉已经发绿。还有半盒湿透的烟草，嚼了一口，又苦又辣，聊胜于无。
+
+天快黑了。我不敢睡在沙滩上——夜里涨潮，也怕野兽。最后爬上一棵歪脖子树，用腰带把自己捆在树杈上。那一夜睡得极沉，沉到第二天醒来，太阳已经升到头顶，浑身酸疼得像被人打了一顿。
+
+但站起来的那一刻，我意识到一件事——所有的"我必须"都消失了。没有人等我汇报，没有人需要我交代，没有钟点，没有日期。这片陌生的海岸上，"我"成了一个完整的、独自的存在。
+
+恐惧是真的，饥饿是真的，孤独也是真的。但"自由"也是真的。
+
+第二天退潮，我看见那艘船被浪推近了一些，搁浅在沙洲上。我用缆绳和木条扎了个筏子，一趟一趟往岸上运东西：饼干、米、朗姆酒、工具箱、枪和火药，还有几本泡得发胀的书。每运一趟，我就对这片岛多一分底气。
+
+岛不是天堂。夜里我听见林子里有东西走动，不知是什么。白天找水，走了两个小时才找到一条小溪。我捧起来喝了个够，坐在溪边想：如果没人来救我，我就在这里活下去。
+
+我转身背对海，朝内陆走去。第一行脚印被风抹平，但那是我自己选的方向。`,
+    related: ['a3', 'a6', 'a2']
+  },
+  {
+    id: 'a2', title: '张骞凿空', form: '历史', theme: 'adventure', wordCount: 739,
+    content: `公元前138年，汉武帝派张骞出使大月氏，本意是联合夹击匈奴。这一年张骞二十出头，带一百多人从长安出发，往西走。
+
+他为什么敢去？因为汉朝已经被匈奴欺负了六十年。白登之围以后，朝廷对匈奴只能和亲、送礼，一忍再忍。汉武帝从匈奴降人口中听说：西边有个大月氏，国王被匈奴杀了，头骨被做成酒碗，全族被迫西迁，恨匈奴入骨。皇帝想：敌人的敌人，就是朋友。
+
+张骞不知道前面有什么。
+
+西域在那个年代，是中原人想象力的边界之外。河西走廊以外是匈奴的草场，再往西是帕米尔高原，是沙漠，是从未听过的名字：大宛、康居、大夏。
+
+使团刚进河西走廊就被匈奴扣住了。军臣单于冷笑：月氏在我北边，汉朝想借我的地盘去联络我的仇人？一扣就是十年。张骞在那里娶妻生子，穿胡服，学胡语，看起来已经是个匈奴人。但他始终留着汉使的节杖，从不离身。
+
+十年后，看守松了。他带着堂邑父等几个旧部西逃，一路向人打听月氏的方向。翻过帕米尔高原，经过大宛、康居，终于到了大月氏——可大月氏已经在阿姆河北岸安居乐业，新地方水草丰美，他们不想报仇了。
+
+任务失败。但他带回了一件比同盟更重要的东西：地图。
+
+他记下了从长安到巴克特里亚的路线，记下了三十六国的位置、物产、兵力、风俗。他描述了大宛的汗血马——出汗像血一样红；描述了葡萄、苜蓿、胡桃、石榴，这些中原没有的东西；描述了更西边还有个国家叫条支，那里的人会吞刀吐火。这些字让长安的皇帝第一次知道，世界的西边有那么多东西。
+
+回程他又被匈奴抓了一次，关了一年多，趁匈奴内乱才脱身。出发时一百多人，十三年后回到长安的，只剩他和堂邑父两个。
+
+他后来又出使一次，带着三百人的队伍、上万头牛羊和无数金帛，走得更远。
+
+历史上称这趟远行为"凿空"——硬生生在未知的空白上凿出一条路。后来的人沿着他记下的路走，越走越宽，把它叫成了"丝绸之路"。`,
+    related: ['a7', 'a12', 'a1']
+  },
+  {
+    id: 'a3', title: '马里亚纳深渊', form: '科普', theme: 'adventure', wordCount: 718,
+    content: `马里亚纳海沟最深处叫"挑战者深渊"，水深10994米。把珠穆朗玛峰倒过来塞进去，山顶距水面还有两千多米。
+
+这个深度的水压是海平面的1100倍。换个说法：相当于每平方厘米的面积上，压着一吨多的重量。一辆小轿车压在你的大拇指指甲盖上，大概就是这个感觉。
+
+海沟是怎么来的？太平洋板块一头扎进菲律宾板块底下，俯冲出来的裂缝。这条裂缝长2550公里，平均宽70公里，已经在那里撕了上亿年。
+
+1960年1月23日，瑞士工程师雅克·皮卡尔和美国海军中尉唐·沃尔什坐"的里雅斯特号"深潜器下到底。下潜用了4小时47分钟。半路上，观察窗外层的树脂玻璃"咔"地裂了一道缝——两个人商量了一下，决定继续往下。
+
+在底部他们待了20分钟，透过观察窗看见一条比目鱼贴着泥游过去——证明那里有生命。
+
+那之前，科学界普遍认为深海是死寂的：没有光，接近冰点，压力能压扁潜艇，什么生物也扛不住。
+
+他们错了。深海生物不硬扛，它们从身体内部想办法——细胞里有一种叫TMAO的物质，能保住蛋白质不被压力挤变形。
+
+2012年，导演詹姆斯·卡梅隆单人驾驶深潜器"深海挑战者号"再度下底，待了两个小时。他描述那里的样子："像月球表面，荒凉，但不空。"有透明的、未命名的生物飘过镜头。
+
+2020年，中国的"奋斗者号"载人潜水器也坐底成功，还开了直播，万米海底的画面实时传回海面。
+
+顺便说一句，"挑战者深渊"这个名字，来自1875年英国"挑战者号"考察船——人类第一次用绳子和铅锤量出这条沟的深度，那截绳子放了八公里多。
+
+深海探险比登月更难。月球近，技术成熟；而深海的水压、腐蚀、通信迟滞，每一样都要重做一遍工程。无线电波穿不透海水，万米之下和陆地的联系，比和月球的联系还脆弱。
+
+也有扫兴的发现：科学家在海沟八千米深处钓上来的狮子鱼体内，检出了微塑料。人类还没下去几次，垃圾先到了。
+
+到今天，下到马里亚纳海沟底的人，比上过太空的人还少。`,
+    related: ['a1', 'a8', 'a2']
+  },
+  {
+    id: 'a4', title: '蜀道难', form: '诗歌', theme: 'adventure', wordCount: 726,
+    content: `噫吁嚱，危乎高哉！
+蜀道之难，难于上青天。
+蚕丛及鱼凫，开国何茫然。
+尔来四万八千岁，不与秦塞通人烟。
+西当太白有鸟道，可以横绝峨眉巅。
+地崩山摧壮士死，然后天梯石栈相钩连。
+
+—— 李 白
+
+【解读】
+李白这首《蜀道难》大约写于唐玄宗天宝初年，是一首"送别加劝阻"的诗。表面写蜀地山路的险峻，实际是劝友人不要去蜀地任职——那地方太险，政治上也乱。剑阁一道关，一人把守，万人难开，历来是割据者的窝。
+
+再看形式。这是一首杂言古诗，句子长短不齐，三言、四言、五言、七言、九言全有，念念就磕磕绊绊——像山路本身一样起伏。
+
+先看它怎么起头。"噫吁嚱"三个字，是蜀地方言里的惊叹，相当于今天的"哎呀妈呀"。起笔不叙事，先喊一嗓子——好诗的开头，往往先把情绪砸在你脸上。
+
+再看它怎么写"难"。正面写山的句子其实不多，更多是用别的东西来垫：用神话垫——"蚕丛及鱼凫，开国何茫然"，蜀地开国久远得像传说；用鸟垫——"西当太白有鸟道，可以横绝峨眉巅"，连鸟都只有一条窄路能飞过；用时间垫——"尔来四万八千岁，不与秦塞通人烟"。四万八千岁当然是夸张，李白式的夸张。但夸张得有道理：隔绝的年头越久，"险"就越不像一条路，而像一种命运。
+
+"地崩山摧壮士死"背后是神话：秦惠王送蜀王五个美女，蜀王派五个壮士迎接，回来路上有大蛇挡路，壮士拽蛇尾，山崩了，壮士和美女都压死在底下，山裂开，从此有了栈道。路是用命换的——这是李白埋在诗里的判断。
+
+中段还有一组声音：悲鸟号古木，子规啼夜月。子规就是杜鹃，传说蜀王杜宇失国而死，魂魄化成杜鹃，夜夜啼血。地理、神话、政治隐喻，全被李白揉在一起。
+
+读《蜀道难》，你读到的不只是一条路，是一个人面对"未知前路"时所有的恐惧和想象。
+
+这种"冒险"是想象的冒险——李白自己多半没走过蜀道，他用文字把那段路凿了出来。凿得比真的还真。`,
+    related: ['a2', 'a9', 'a1']
+  },
+  {
+    id: 'a5', title: '徐霞客', form: '传记', theme: 'adventure', wordCount: 701,
+    content: `徐霞客，名弘祖，明朝末年江阴人，1587年生。父亲一辈不愿做官，家里藏书丰富，是当地有名的书香门第。徐霞客小时候在父亲书房翻到一本《山海经》，从此心里装下了"远方"两个字。科举他不考，亲友们都觉得这孩子长歪了。
+
+他二十二岁第一次出门，母亲给他做了一顶远行冠，说：你去吧，替我看看名山大川，回来讲给我听。此后三十多年，他走遍了大半个今天的中国——浙江、福建、安徽、河南、山西、陕西、湖广、云贵、两广。
+
+他专门走没人走的地方。西南的溶洞、湘桂的山间小道、贵州的苗寨。他不走官道，不乘驿马，雇不到挑夫就自己背行李走。几次遇强盗，几次断粮，几次摔下悬崖被路人救起。
+
+最险的一次在湖南。湘江上夜泊遇盗，强盗杀人抛尸，他跳江逃生，同行和尚静闻受了重伤，后来死在南宁。静闻的心愿是把一部血写的《法华经》供到云南鸡足山。徐霞客就背着经书和朋友的骨灰继续走，一走又是一千多里，把人送上了山。
+
+他每天写日记。在雁荡山，他为了验证古书上说山顶有个大湖"雁湖"，系着布带从悬崖上往下缒，布带磨断了，他攀着岩石爬上来，差点没命。结论是：古书写错了，山顶没有湖。
+
+那些日记后来整理成《徐霞客游记》，六十万字。他比欧洲地理学界早一百多年，系统记录了岩溶地貌的特征——峰林、漏斗、暗河。他还考证出金沙江是长江的正源，推翻了一千多年来"岷江导江"的旧说。他是世界上第一个对石灰岩地貌做系统观察的人。
+
+但他不是为科学去走的。临终前他对朋友说：我只是一介布衣，没有官职，没有俸禄，靠两脚走完了自己想走的路。张骞、玄奘奉君命而行，我不是，我自己想去的。
+
+1640年，他两脚生了重病，再也走不动，被丽江的土司派人用滑竿抬回江阴。第二年去世，五十四岁。
+
+他把自己的命活成了一个"我决定的方向"。`,
+    related: ['a2', 'a10', 'a1']
+  },
+  {
+    id: 'a6', title: '老人与海·出海', form: '小说节选', theme: 'solitude', wordCount: 726,
+    content: `天还没亮，我就把船推下了水。
+
+岸上的人都还在睡。男孩马诺林昨天被他父亲叫回去了，说我的船运气坏，八十四天没打到一条鱼，不能再跟着我。父母的话是要听的。可临走那晚，男孩还是帮我把钓索和鱼叉搬上了船，又跑去给我买了沙丁鱼当鱼饵。
+
+我不怪他们。打鱼人信运气，就像信天气。男孩走的时候哭了一场。他说：你的船要是运气坏，我就把我的运气分你一半。我说：你留着吧，等你大了，自己打一条大的。
+
+船出了港湾，四下只剩水。先是黑的水，然后是灰的水，然后天边裂开一道亮。我把鱼饵一条条放下去，放到不同的深度，手法很稳。饵要放得笔直，每根钓索垂到的深度都得是我要的深度——别的渔夫随它去，我不。手上有劲的时候，他们叫我有劲的圣地亚哥，现在没人叫了，可手艺还在。这双手干这个干了六十年，闭着眼睛也不会错。
+
+别的渔夫隔着水互相喊话，说收成，说棒球赛的比分。我不喊。我的船上只有我一个人，我早就习惯了跟自己说话。收音机没带，球赛的消息要等回岸才知道。洋基队今年还是迪亚吉奥在打球，那家伙的爹也打过鱼。
+
+"今天会有的。"我对海里说，"你再往下一点。"
+
+海不理我。海从来不理任何人。它只是在那里，大得没边，深得没底，养活你也吞掉你，全看它高不高兴。年轻的渔夫管海叫el mar，把它当对手，当男人。我管海叫la mar，当它是个女人：给不给你，是它的事，你没法跟它讲道理。
+
+可我还是天天来。不是因为不怕空手回去，是因为这片水里只有我一个人说了算——饵放多深，船往哪走，收不收线。岸上有岸上的规矩，海上只有我和鱼。
+
+太阳升起来了。一只军舰鸟在天上打转，翅膀一动不动，借风悬着。我知道它盯上了飞鱼；飞鱼一出水，底下就有大的在追。我数了数天上的云，知道今天的风不会变。
+
+那就等着吧。一个人，一条船，一片海。八十五天了，该转个运了。鱼总会来的。`,
+    related: ['a1', 'a10', 'a8']
+  },
+  {
+    id: 'a7', title: '苏武牧羊', form: '历史', theme: 'solitude', wordCount: 806,
+    content: `公元前100年，苏武以中郎将身份出使匈奴。本来是个和平使命——新单于即位，放还了扣下的汉使，汉朝礼尚往来，也派人送还匈奴人质，互通书信。
+
+结果撞上一件祸事。使团副使张胜卷进匈奴内部的谋反案，案子牵连到汉使。单于扣下苏武，先派卫律劝他投降。
+
+苏武不干。他说：屈节辱命，就算活着，有什么脸面回汉朝？拔刀自刎，被抢救回来。单于又把他扔进大地窖，不给吃喝。天下雪，苏武就着雪吞毡毛，几天没死。匈奴人当他有神相助，不敢杀，把他流放到北海——今天的贝加尔湖——去放羊。
+
+话说的很明白：公羊生了小羊，就放你回去。
+
+公羊当然不会生小羊。这一放，就是十九年。
+
+北海那地方，冬天零下三四十度，方圆几百里没有人烟。匈奴连粮食都不给，苏武就挖野鼠洞里藏的草籽充饥。放羊的时候，他手里一直握着那根汉节——出使时代表汉朝的杖，上头缀着牦牛尾。十九年下来，毛全掉光了，他还是握着。睡觉时放在身边，起身时拿在手里。
+
+孤独比寒冷更难熬。没有书，没有笔墨，没有一个说汉话的人。他跟过路的部落打过交道，牛羊还被偷抢过一回，日子更穷了。
+
+几年后，李陵来了。就是那位兵败投降的汉将，已经娶了单于的女儿。老朋友摆酒劝他：你哥哥弟弟都因小罪自杀了，母亲死了，妻子改嫁，你在汉朝已经没有牵挂，何苦在这儿熬？
+
+苏武只回了一句：我的命早就是国家的了。你再劝，我就死在你面前。
+
+李陵叹着气走了，走之前说：真是义士。我和卫律的罪，上通于天。
+
+十九年里，汉武帝死了，匈奴换了几个单于。当年一起出使的人，降的降，死的死。
+
+汉昭帝即位后，汉使打听到苏武还活着，编了个故事：说天子在上林苑射下一只大雁，雁足上绑着苏武写在帛上的信。匈奴人没法抵赖，只好放人。
+
+李陵摆酒送行，起舞唱歌：走过万里穿过大漠，为皇上带兵打匈奴，路断了，箭没了，名声也毁了。老母已死，我纵想报恩，还能回哪儿去？唱完泪流满面，就此诀别。
+
+回长安那天，苏武头发全白，手里还握着那根光秃秃的节杖。出使时一百多人的使团，跟着他回来的，只剩九个。`,
+    related: ['a2', 'a9', 'a20']
+  },
+  {
+    id: 'a8', title: '旅行者1号', form: '科普', theme: 'solitude', wordCount: 704,
+    content: `1977年，美国发射了两个探测器，旅行者1号和2号。它们赶上了天上掉下来的机会：那几年，木星、土星、天王星、海王星正好排到太阳同一侧，这种排布一百七十六年才有一回。借行星引力一级一级甩出去，一次任务就能串起四颗巨行星。它们原本的活儿很简单：拍几张照片，然后任务结束，工龄四年。
+
+结果它们一直干到了今天。
+
+旅行者1号飞得最快也最远。它近距离拍过木星的火山——人类第一次在地球以外看见活火山喷发；拍过土星光环里像麻花一样拧着的细环。1980年飞掠土星之后，它掉头离开行星平面，朝着太阳系外爬升。
+
+1990年2月14日，它飞到离地球60亿公里的地方，回头拍了一张照片。照片里地球只是一个0.12像素的小点，挂在太阳光散射出的一道光带里。天文学家卡尔·萨根管它叫"暗淡蓝点"。
+
+那是它拍的最后一张照片。之后相机关了，省电。
+
+2012年8月，旅行者1号飞出日球层——太阳风能吹到的边界——进入星际空间。边界上发生的事很具体：来自太阳的带电粒子数量突然下跌，来自银河系的宇宙射线数量陡增，两条曲线交叉的那一刻，科学家知道，它出院子了。它是第一个离开太阳系"院子"的人造物体。此刻它距离地球超过240亿公里，信号以光速飞回来，也要22个多小时——工程师发一条指令，要等将近两天才能看到结果。
+
+它带的核电池靠钚衰变发热发电，一年比一年弱。工程师们只好一件一件关掉仪器，像一间屋子一间屋子地熄灯。估计到2030年前后，它会彻底安静。
+
+但不会停下。它将以每秒17公里的速度在星际空间里漂下去，几万年，几十万年。船上放着一张镀金唱片，封套上刻着怎么播放它的图解：115张地球的图片，海浪、雷、鲸歌、心跳，55种语言的问候，还有九十分钟的音乐——巴赫、查克·贝里，和一首中国古琴曲《流水》。
+
+没人知道会不会有人捡到它。大概率没有。可它还是带着，一直飞。`,
+    related: ['a3', 'a13', 'a6']
+  },
+  {
+    id: 'a9', title: '江雪', form: '诗歌', theme: 'solitude', wordCount: 704,
+    content: `千山鸟飞绝，
+万径人踪灭。
+孤舟蓑笠翁，
+独钓寒江雪。
+
+—— 柳宗元
+
+【解读】
+柳宗元写这首诗的时候，正在被贬永州。公元805年，他参与的"永贞革新"失败：皇帝病退，靠山倒台，同伙被杀的被杀、流放的流放。他从朝廷里最有前途的年轻官员，一路贬到南方荒僻之地，挂个"司马"的空衔——没有实权，不许干政，实际上是被看管起来。这一待就是十年。母亲死在永州，他自己落下一身病。
+
+所以这不是一首风景诗。
+
+高手写情绪，从不报名字，只摆证据。整首诗写的全是"没有"：没有鸟，没有人，没有路可走。可柳宗元偏不直说"我孤独"，他给你一个画面，让你自己看。你看出来了，那孤独就是你的了。
+
+你注意他的镜头怎么推。第一句起得极大：千山、万径——空间拉到无穷大。然后写"绝"、写"灭"——把活的东西全部拿走，鸟没有了，人没有了。镜头继续推近：万山之中，只剩一条船；船上，只剩一个人。天底下干干净净，最后落在"独钓"两个字上。四句诗，是一个从天地推到孤舟的长镜头。
+
+钓？寒江封冻，钓不上鱼的。老翁钓的不是鱼，是"我还在这儿"。全世界都不理你了，官没了，朋友散了，天地白茫茫一片——他还是披着蓑衣坐在那里。风骨就在这个"坐"里：不喊冤，不求饶，也不走。
+
+还有一个藏了一千多年的机关：把四句每行的第一个字连起来读——千、万、孤、独。"千万孤独"。是巧合还是有意，没人能断定。但放在这首诗里，准得吓人。二十个字，藏头藏尾，处处是心眼。
+
+柳宗元在永州写山水出了名，《永州八记》里的石头、溪水、小潭，篇篇都是好文章。可你细看，那些山水全都像《江雪》里的老翁——被丢在荒僻处，没人来看，自己长成了风景。
+
+四句二十个字，是一个丢了所有的人，给自己画的像。李白写孤独靠喊，"古来圣贤皆寂寞"；柳宗元不喊，他把孤独冻在雪里，冻得更久。`,
+    related: ['a4', 'a7', 'a19']
+  },
+  {
+    id: 'a10', title: '梵高', form: '传记', theme: 'solitude', wordCount: 710,
+    content: `文森特·梵高一辈子只卖出过一幅画。
+
+他1853年生在荷兰一个牧师家庭，做过画店店员、教师、传教士，都干不长。在比利时矿区传教时，他跟矿工一起下井，把自己的钱和衣服全给了穷人，教会反而开除他——嫌他形象太狼狈，丢教会的脸。被开除以后他还留在矿区，租不起房，住窝棚，画那些挖煤的人、织布的人、围着一盘土豆吃饭的人。那是他最早的画，颜色黑得像煤。
+
+二十七岁那年他决定画画。没有老师，自己练。弟弟提奥在巴黎做画商，每月寄钱养他，一养十年。
+
+他画得极勤。十年里画了八百多幅油画、上千张素描。去了巴黎，颜色亮起来；再搬到法国南部的阿尔，太阳一晒，颜色彻底烧起来了。田野、麦田、向日葵、星空，颜色一层比一层亮，笔触一笔比一笔拧。向日葵是画给高更的——他租下一栋黄房子，梦想建一个画家们的公社，先把朋友的房间布置好，墙上挂满向日葵。
+
+可是没人要他的画。评论家说他疯了，同行绕着走。高更来了，住了两个月，两个人从早吵到晚，吵到高更逃走。梵高割下自己半只耳朵，包好，送去给咖啡馆的女招待。
+
+邻居联名写信，要求把他赶出镇子。他自愿进了圣雷米的精神病院，在病院的院子里继续画。《星月夜》就是在那里画的——夜里他看着窗外的柏树和星星，白天凭记忆落笔。
+
+1890年5月，他搬到巴黎北边的奥维尔小镇，加歇医生照看他。七十天里他画了七十多幅画。7月27日，他在麦田里朝自己开了一枪，自己走回旅馆，两天后死在提奥怀里，三十七岁。最后一句话据说是：悲伤会永远持续。
+
+提奥半年后也病死了。提奥的妻子乔安娜整理遗物，发现哥俩的通信有六百多封，还有满屋子没人看过的画。
+
+她一张一张拿出去给人看，办展览，找人写文章。
+
+现在你随便走进一家美术馆，隔着三层人也能认出他的画。那种拧着的、烧着的笔触，全世界独一份。`,
+    related: ['a6', 'a5', 'a15']
+  },
+  {
+    id: 'a11', title: '大闹天宫', form: '小说节选', theme: 'courage', wordCount: 743,
+    content: `玉帝封他做"齐天大圣"，到底只是个虚衔，打发去看蟠桃园。先前封过一回"弼马温"，他嫌官小，反下天去；太白金星出主意，说不如顺了他，给个空名养起来，免得生事。
+
+孙悟空在园里吃了几天桃，听说王母开蟠桃会，请了满天神仙——西天佛老、菩萨、圣僧，上八洞、中八洞、下八洞，名单念了一大串。他问：请我了没有？
+
+仙女们笑：没听说。旧规如此，从来不曾请他。
+
+就这一句话。他定住七个仙女，直奔瑶池。路上把赤脚大仙骗去通明殿，自己变作大仙的模样，先进去把百味八珍尝了个遍，玉液琼浆喝了个够。酒意上来，又晃到兜率宫，把太上老君五葫芦金丹当炒豆吃了。
+
+闯下泼天大祸，他倒清醒了：不好，这场祸比天还大。又惦记山中群猴，就回身再进瑶池，包了些果品酒菜，带回花果山给孩儿们尝尝鲜——自己闯的祸，还不忘给家里捎东西。
+
+玉帝派十万天兵，布下十八架天罗地网。托塔天王、哪吒、九曜星、二十八宿，把一座山围得水泄不通。
+
+他从洞里出来，不慌。九曜星上来骂阵，他一轮铁棒打回去，九个人拖着兵器败走；四大天王加哪吒一起上，打到日头西沉，天兵折了无数。观音荐了二郎真君来，两个赌变化、斗神通：他变麻雀，二郎变饿鹰；他变鱼，二郎变鱼鹰；他变水蛇，二郎变灰鹤。从天上一路打到地下，灌江口的小圣庙里，他索性变成二郎神的模样，坐进庙里受香火——气得真二郎举着三尖两刃刀追进来。
+
+老君在天上扔下个金刚琢，正砸在他头上。捆了，押上斩妖台。
+
+刀砍不动，雷劈不伤，火烧不死。老君说：这猴子吃了我的金丹，煅成一块了，放我那八卦炉里炼，炼出丹来，他自化灰烬。
+
+炼了七七四十九天。开炉那天，他纵身跳出来——原来他躲在"巽宫"位下，巽是风，有风无火，只是风搅得烟来，把一双眼熏红了。他倒蹬丹炉，掣出金箍棒，一路打向灵霄殿。打得九曜星闭门，四天王无影。
+
+那猴子站在火光里，一双眼睛炼成了金的。`,
+    related: ['a16', 'a13', 'a1']
+  },
+  {
+    id: 'a12', title: '班超投笔从戎', form: '历史', theme: 'courage', wordCount: 784,
+    content: `班超年轻时在洛阳靠替官府抄书养家。他哥班固在修《汉书》，妹妹班昭后来也是有名的才女。一家人都是拿笔的，偏偏他心里装着刀。
+
+有一天他把笔一扔，说：大丈夫就算没有别的志向，也该学张骞、傅介子，到西域去立功封侯，怎么能一辈子趴在笔砚之间？
+
+旁边抄书的人都笑他。他说：小子们哪里懂。
+
+这话放出去十几年，他才等到机会。公元73年，他四十一岁，随窦固出征匈奴，被派带三十六个人出使鄯善国。
+
+鄯善王开头招待得很周到，忽然就冷淡下来。班超判断：匈奴的使者到了，国王在两头摇摆。他诈问了伺候他们的胡人一句：匈奴使者来了几天？住哪儿？那胡人以为瞒不住，全招了。班超把这人关起来，将随从三十六人叫来喝酒，喝到一半说：匈奴使者一到，我们都要被绑去喂豺狼。怎么办？
+
+三十六个人说：听你的。
+
+班超说：不入虎穴，焉得虎子。今夜就动手，火攻匈奴营地。
+
+半夜大风。他让十个人带着鼓藏在营后，二十个人持弩埋伏门口，自己顺风放火。鼓声、喊声一起，匈奴人从睡梦里炸出来，乱成一团。班超亲手格杀三人，随从砍了三十多个，剩下的全烧死在帐里。这一夜，一百三十多人的匈奴使团，被三十六个人全歼。
+
+第二天，他把匈奴使者的首级摆在鄯善王面前。鄯善全国震动，随即归汉，送王子去洛阳当人质。
+
+下一站于阗。于阗王听信巫师，说天神发怒，要汉朝使者的马来祭。班超说：行，叫巫师自己来牵。巫师一到，他拔刀砍了，把脑袋送给于阗王。于阗王早听说过鄯善那档子事，当场杀了匈奴派来的监护官，归降。
+
+此后三十年，班超在西域一国一国地做这件事——有时候用几十个人，有时候用一封信，有时候借这个国家的兵打那个国家。五十多个国家，逐一归附。他派部下甘英再往西探，一直走到波斯湾，那是中国人当时到过的最西的地方。
+
+年纪大了，他上书求归，就一句话：臣不敢望到酒泉郡，但愿生入玉门关。
+
+公元102年，他六十九岁，终于回到洛阳，回京一个月后去世。
+
+西域那盘棋，是他带着三十六个人先下的第一手。`,
+    related: ['a2', 'a7', 'a15']
+  },
+  {
+    id: 'a13', title: '恐惧来的时候，身体在干什么', form: '科普', theme: 'courage', wordCount: 755,
+    content: `你站在高台边上往下看，腿肚子发软——不是你胆小，是你血管里的肾上腺素到了。
+
+危险信号先被杏仁核接住。这是大脑深处一块杏仁形状的区域，专门负责拉警报。它不等大脑皮层慢慢分析，直接下令：肾上腺，放激素。这条通道有个外号叫"低路"——绕开思考，走捷径，零点一秒内完成。思考那条"高路"慢得多，等你想明白"那是鞋带不是蛇"，人已经跳开了。进化不在乎你想清楚，只在乎你活着。
+
+几秒钟内，肾上腺素冲进血液。心跳加快，把血往大肌肉群里送；瞳孔放大，多进光线；肝脏分解糖原，血糖升高——身体在给你调集所有能动用的能量。同一时刻，消化系统这种"不急的事"被关掉，所以人一紧张胃里就发空。过十几分钟，第二波激素皮质醇才慢悠悠赶到，它管"持久战"，压力拖得越久，它的水位越高。
+
+这套反应是几百万年进化出来的。草原上祖先看见狮子，只有两种活法：打，或者跑。身体把两种选项的燃料都备好了，这就是"战或逃反应"。其实还有第三种：僵住。小鹿被车灯照住一动不动，就是这条古老线路在短路——身体判断跑也跑不掉、打也打不过，干脆关机，赌对方看不见。
+
+那勇气是什么？不是不分泌肾上腺素。害怕的人和不害怕的人，激素曲线差不了多少。差别在大脑皮层——它收到警报之后怎么投票。
+
+训练能改变这个投票。消防员的杏仁核照样报警，但反复演练让大脑皮层学会把警报翻译成行动清单：先看烟往哪走，再看承重墙在哪。他们不是不抖，是抖着也按流程走。治恐高、治怕狗的心理治疗也是这个原理，叫暴露疗法：一次接近一点，让大脑在安全里反复核对"这东西没咬死我"，警报的音量就一格一格降下去。
+
+还有一层：前额叶皮层能在几十秒内抑制杏仁核，让激素退下去。深呼吸有用，道理在这——缓慢的呼气会给大脑一个"现在安全"的信号，等于亲手把警报器的音量旋钮拧小。
+
+所以勇气不是天生不怕。是身体照常拉响警报，而有人学会了在警报声里继续往前走。`,
+    related: ['a11', 'a8', 'a18']
+  },
+  {
+    id: 'a14', title: '夏日绝句', form: '诗歌', theme: 'courage', wordCount: 708,
+    content: `生当作人杰，
+死亦为鬼雄。
+至今思项羽，
+不肯过江东。
+
+—— 李清照
+
+【解读】
+二十个字，四句话，没有一个生僻字。可这首诗的分量，压住了一部宋史。
+
+绝句是诗里最短的体裁，二十个字，容不得铺垫，容不得客套，第一句就得出骨头。长诗可以绕，绝句没地方躲。李清照偏偏选了它来骂一个时代。
+
+背景先说清。李清照写它的时候，北宋刚亡。1127年，金兵攻破开封，徽钦二帝被掳走，朝廷仓皇南渡，偏安杭州。她自己的丈夫赵明诚做江宁知府，城里有人叛乱，他半夜从城墙上吊绳子跑了——弃城而逃。第二年，赵明诚病死在赴任路上。国破了，家也跟着散了。李清照后半生抱着残存的金石书画一路南逃，东西丢的丢、抢的抢，最后所剩无几。
+
+她是个女人，那个年代女人不能做官，不能领兵。她能做的，是写下这二十个字。
+
+项羽的故事：垓下战败，只剩二十八骑。乌江亭长备了船劝他过江——江东子弟还在，地方千里，人可以再起。项羽笑了：我带八千江东子弟出来，如今一个没剩。就算江东父老可怜我，还肯认我做王，我有什么脸面见他们？他把马送给亭长，步行接战，杀了几百人，自刎而死。死时三十一岁。
+
+"不肯过江东"——她夸的是项羽，骂的是所有过江逃命的人。朝廷过江了，丈夫也"过江"了。连她自己，也被人潮裹挟着过了江。所以这四句里没有一句是站着说话不腰疼的，每一句都烫。
+
+再看她的写法。前两句是标准：生，要当人中豪杰；死，也要做鬼里英雄。后两句是证据：我为什么提项羽？因为到今天我还想着他，想着他那一回头。不喊口号，不点名骂谁，只立一个标准在那里。然后回头一看，满朝文武，够不上这个标准。
+
+李清照是婉约词的代表，写"寻寻觅觅，冷冷清清"的那个李清照。可到了该硬的时候，她的骨头比谁都硬。二十个字，是乱世里一个读书人拿得出的全部兵器。`,
+    related: ['a15', 'a19', 'a4']
+  },
+  {
+    id: 'a15', title: '司马迁', form: '传记', theme: 'courage', wordCount: 719,
+    content: `司马迁是史官的儿子。他爹司马谈做太史令，管皇家图书档案。司马迁十岁诵古文，二十岁出门壮游——江淮、齐鲁、梁楚，去看过屈原投水的汨罗江，去过韩信挨胯下之辱的淮阴，在曲阜看儒生演习礼仪。这一圈走了几年。回来以后做了郎中，跟在汉武帝身边当差。
+
+他爹临死前攥着他的手，说我家世代为史官。我死了，你要接太史令；接了，就别忘我要写的书。周公之后有孔子，孔子到今天五百年了，这五百年的史事没人记，你要记着。
+
+公元前99年，将军李陵率五千步兵深入匈奴腹地，被八万骑兵围住。五千人硬扛了八天，杀伤匈奴上万，箭射光了，粮吃尽了，援军没有来。李陵投降。
+
+消息传回长安，满朝文武都说李陵该死。汉武帝问太史令司马迁的看法。
+
+司马迁说了实话：李陵以五千人杀伤匈奴上万，箭尽粮绝才降，说不定是想留着命再找机会报效汉朝。
+
+汉武帝大怒。在他看来，替降将说话就是影射主帅李广利——皇帝宠妃的哥哥。司马迁被判死刑。
+
+汉代的死罪有两条活路：交五十万钱，或者受宫刑。司马迁官小，家里拿不出钱，朋友也没人敢替他出。他选了宫刑。
+
+这在当时是比死更辱的选择。他后来在《报任安书》里写：肠子一天翻搅九回，坐在家里精神恍惚，出门不知要往哪走，一想起这份耻辱，冷汗就湿透衣裳。人固有一死，或重于泰山，或轻于鸿毛——他要就这么死了，跟鸿毛一样。
+
+他活下来，只为一件事：书还没写完。
+
+这部书从黄帝写到当朝，一百三十篇，五十二万字。没有纸，一个字一个字刻在竹简上。本纪、表、书、世家、列传，帝王将相之外，他还给游侠、商人、刺客、医生立传——在那个只看官阶的年代，这是他自己定的体例。
+
+刑后十四年，书写成了。就是《史记》。他写完说：藏之名山，传之其人。
+
+鲁迅后来评它："史家之绝唱，无韵之离骚。"写书的人，名字比书里所有王侯都亮。`,
+    related: ['a14', 'a12', 'a20']
+  },
+  {
+    id: 'a16', title: '崂山道士', form: '小说节选', theme: 'secret', wordCount: 810,
+    content: `王生打小羡慕道术，听说崂山上有个老道神通广大，背了包袱就上山。
+
+走了几十里山路，到山顶见一座道观，幽静得很。一个老道坐在蒲团上，白头发垂到衣领，神气爽朗。王生上前磕头，把来意说了。老道打量他：看你娇生惯养的样子，怕是吃不得苦。王生磕头：能吃。
+
+第二天一早，师父扔给他一把斧头：砍柴去。砍了一个月，手上全是茧，师父一句道术没教。王生熬不住，心里打起了退堂鼓。
+
+这天傍晚回来，看见师父和两个客人喝酒。天黑了，屋里没点灯。师父剪了张纸，圆溜溜的，往墙上一贴——满屋月光，亮得跟白昼一样。徒弟们在旁边伺候，来来往往，影子都清清楚楚。一个客人说：这么好的月色，该叫嫦娥来助兴。师父抓起一根筷子，扔进月里。就见一个美人从月光里走出来，起初不到一尺，落地便和真人一般，长袖一舞，唱了一曲，歌声清亮，像箫管吹的。唱完纵身跳上桌子，众人正惊看，已经变回一根筷子。满座大笑。又一个客人说：今晚尽兴，可我的酒量到了。你们陪我到月宫里喝几杯如何？三个人起身，慢慢走进墙上的月亮里。王生看得清清楚楚：三个人在月中对饮，胡子眉毛都看得见，就像镜子里的人影。
+
+蜡烛点上，师父独自坐着，客人已经不见了，桌上杯盘狼藉，墙上的月亮又变回一张圆纸。
+
+王生看呆了，不想走了。又忍了一个月，手上新茧摞旧茧，师父还是不教。
+
+他到底辞了行。临走求师父：我白干两个月苦力，教我一样小法术，就一样。师父笑：你想学什么？王生说：我见师父走路，墙都拦不住，教我穿墙就行。
+
+师父教了他口诀，让他对着墙走。王生不敢，师父说：低着头猛走，别犹豫。他退开几步，闭眼一冲——过去了，回头看，人已在墙外。他大喜。师父叮嘱：回去以后心要干净，不然不灵。
+
+王生回到家，跟妻子吹嘘，说自己遇上了神仙，墙都拦不住。妻子不信。他退开几步，念咒，低头猛冲——"咚"，额头上撞起个鸡蛋大的包。妻子笑弯了腰。王生又羞又恼，把那老道骂了个狗血淋头。
+
+蒲松龄在故事后面添了一句评论：听说这事的人没有不笑的，可世上的"王生"还真不少。`,
+    related: ['a11', 'a17', 'a19']
+  },
+  {
+    id: 'a17', title: '勾践卧薪尝胆', form: '历史', theme: 'secret', wordCount: 759,
+    content: `公元前494年，越国被吴国打垮。两国是世仇：三年前越王勾践在槜李大败吴军，吴王阖闾伤重而死，儿子夫差继位，天天让人站在院子里提醒他：你忘了杀父之仇吗？三年厉兵秣马，夫差发兵复仇，在夫椒把越军打得全军覆没。会稽山上，越王勾践只剩五千残兵，山下面是夫差的大军。
+
+降。没有第二条路。大夫文种去吴营谈条件，低声下气，外加美女宝器：越王夫妇到吴国为奴，越国称臣纳贡。吴国大臣伍子胥劝夫差斩草除根，夫差不听——他要做霸主，霸主要面子，要别人服他。
+
+夫差同意了。他让勾践干最贱的活——养马。勾践住石屋，穿粗布，夫差出门，他牵马坠镫。吴国百姓围着看：这就是越王。他低着头，不吭声。范蠡陪着他一起做奴，文种留在越国看家。
+
+有一次夫差生病，勾践去尝他的粪便，以此"判断病情"，说大王的病过几天就好。夫差被这份"忠心"感动了，三年后放他回国。
+
+回去的勾践像换了个人。宫殿不住，睡柴草堆；梁上挂一颗苦胆，每顿饭前舔一下。他问自己的永远是那句话：你忘了会稽的耻辱吗？
+
+分工很明确。对外，他年年向吴国进贡，送美女西施，送神木给夫差修姑苏台——让夫差觉得他服了，让他修宫殿、打齐国、北上争霸，把吴国的血慢慢放干。对内交给文种：越国十年不征税，粮满仓；生了男孩奖励两壶酒一条狗，生了女孩奖励两壶酒一头猪；军队秘密操练，兵器偷偷打造。
+
+整整二十年，没有人知道越国在等什么。伍子胥看出来了，劝夫差灭越，夫差不听，赐死了他。伍子胥临死说：把我的眼睛挖出来，挂在姑苏城门上，我要看着越军进城。
+
+公元前482年，夫差率精锐北上会盟，国内空虚。勾践起兵，杀了吴国太子。九年后，越军攻破姑苏城。夫差求和，勾践不答应。夫差自杀前以袖遮面：我没脸去见伍子胥。
+
+二十年的秘密，一朝揭晓。灭吴以后，范蠡连夜出走，临走给文种留了一封信：飞鸟尽，良弓藏；狡兔死，走狗烹。文种没走成，后来果然被勾践赐死。这是后话。`,
+    related: ['a16', 'a15', 'a12']
+  },
+  {
+    id: 'a18', title: '隐身术：保护色与拟态', form: '科普', theme: 'secret', wordCount: 805,
+    content: `一片落叶停在地上，你走近了，它忽然展开翅膀飞了——枯叶蝶收翅的时候，翅面上有叶脉、有叶柄，甚至有几个"虫咬的洞"。
+
+这叫拟态：长得不像自己，像别的东西。竹节虫像一截树枝，尺蠖弓着身子像一根小枝条，兰花螳螂整只就是一朵兰花，往花丛里一站，蜜蜂自己送上门。
+
+保护色是另一路数：不求像某个具体东西，只求融进背景。北极狐冬天换白毛，夏天换灰褐毛；比目鱼趴在海底，几分钟内把体色调成沙地的颜色和斑纹，连沙粒的粗细都对得上。
+
+里面的讲究比看起来多。你看企鹅、鲨鱼，都是背深腹浅——从上面往下看，深色的背融进深海；从下面往上看，浅色的肚皮融进天光。这叫反荫蔽，是保护色的基础课。再进一步是破坏色：斑马和豹子身上的条纹斑块，把自己身体的轮廓打碎，让天敌认不出"这是一整块肉"。
+
+教科书级的例子是桦尺蛾。十九世纪英国工业革命，煤烟把树干熏黑了，原来占多数的浅色蛾子在黑树干上藏不住，被鸟一只一只吃掉，黑色变异个体反而活了下来。几十年间，黑蛾从不到百分之一变成百分之九十多。后来空气治理了，树干白回来，浅色蛾又扳了回来。一场进化实验，在人类眼皮底下跑了个来回。
+
+章鱼和变色龙是这里面的高手。它们的皮肤里有成层的色素细胞，由神经直接控制，零点几秒内换一身花纹。章鱼不只改颜色，还能改皮肤质感——全身长出小疙瘩，模仿礁石的粗糙。有潜水员拍到章鱼从沙地游过礁石，身体的花纹一路"刷"过去，像翻书一样。
+
+这套本领是谁逼出来的？天敌。鸟的眼睛尖，稍有破绽就是一条命。进化在这里做了几千万年的筛选：像的活下来，不像的被吃掉。活下来的，把"像"传下去。枯叶蝶翅膀上的每一道叶脉，都是无数次失败筛选后留下的版本。
+
+人类学着用。迷彩服是最粗的一层；一战时的军舰涂"炫目迷彩"，大块几何色块，不图隐藏，专门扰乱潜艇测距——让对方算不准船速和航向；隐身战机更进一步，让机身反射的雷达波散开，在对方屏幕上缩成一只鸟的信号。
+
+自然界的秘密藏了几千万年。我们隔着显微镜和雷达，才勉强读懂了几页。`,
+    related: ['a13', 'a8', 'a16']
+  },
+  {
+    id: 'a19', title: '无题', form: '诗歌', theme: 'secret', wordCount: 715,
+    content: `相见时难别亦难，
+东风无力百花残。
+春蚕到死丝方尽，
+蜡炬成灰泪始干。
+晓镜但愁云鬓改，
+夜吟应觉月光寒。
+蓬山此去无多路，
+青鸟殷勤为探看。
+
+—— 李商隐
+
+【解读】
+李商隐是唐代最会藏秘密的诗人。他一辈子夹在牛党、李党之间：恩师令狐楚是牛党，岳父王茂元却被划进李党。娶了妻子，等于背叛了师门。两头都不容他，官越做越小，心事没法明说，只好写"无题"——连题目都不给。这样的无题诗，他留下来十几首，一首比一首难猜。有人猜爱情，有人猜仕途，猜了一千年。
+
+这首诗表面上写的是一场秘密的爱情：见面难，分别更难。开头两个"难"字叠在一起，前一个难是机会难得，后一个难是割舍不下。"东风无力百花残"——不是花该谢，是东风没力气护住花了。写景七个字，把"留不住"三个字说尽。
+
+最狠的是中间一联。"春蚕到死丝方尽"——"丝"和"思"同音，蚕吐丝到死才停，人的思念到死才断。"蜡炬成灰泪始干"——蜡烛烧成灰，"泪"才流干。两个比喻都不新鲜，新鲜的是那股劲：不说想念有多深，只说想念的期限——到死，成灰。这两句从情诗里长出来，后来变成形容一切至死不渝的句子，从爱情用到事业，用到一切认死理的人。
+
+后半转换视角：清晨照镜子，怕你愁得鬓角变白；夜里吟诗，月光该冷了吧——不说自己苦，全在猜对方苦。最后两句给自己留一条缝：蓬山此去无多路，青鸟殷勤为探看。蓬山是仙山，青鸟是王母娘娘的信使。路其实不远，就是过不去，只好托一只鸟，一趟一趟地探。
+
+但历代都有人读出另一层。李商隐被排挤了一辈子，抱负从来见不得光。有人说，诗里那座"蓬山"——看得见，到不了——也可能是他够不着的理想。不能明说的话，全藏在"无题"两个字里。
+
+秘密的爱情也好，秘密的志向也好，写法是一样的：不直说。用蚕丝说，用烛泪说，用清晨镜子里的白发说。
+
+有些话，只能这样讲。`,
+    related: ['a9', 'a14', 'a20']
+  },
+  {
+    id: 'a20', title: '邓稼先', form: '传记', theme: 'secret', wordCount: 767,
+    content: `1958年8月，二机部副部长钱三强找邓稼先谈话：国家要放一个"大炮仗"，你愿不愿意参加？工作是保密的，上不告父母，下不告妻儿，从此不能在公开刊物上发论文，不能出国。
+
+邓稼先三十四岁。他1948年去美国普渡大学留学，不到两年拿下博士，二十六岁，人称"娃娃博士"。学位到手第九天，他就登船回国。这一晚，他想了一夜，答应了钱三强。
+
+回家后他只对妻子许鹿希说：我要调动工作了，去哪不能说，干什么不能说，以后这个家就交给你了。他还说了一句：要是做好了这件事，我这一辈子就活得很值得，就是为它死了也值得。
+
+这一走，是二十八年。
+
+他在哪？青海金银滩，新疆罗布泊。地图上找不到名字的地方。干什么？算原子弹。苏联援助撤走，图纸带走，专家放话：没有我们，你们二十年也搞不出来。邓稼先带着一群二十多岁的大学生从头算。没有计算机，就用算盘和手摇计算机。关键的一个数据算了九遍，每遍几万个网点，稿纸从地板堆到天花板。算出来和苏联专家留下的一个数对不上，九遍都一样——最后证明，是苏联人那个数错了。
+
+1964年10月16日，罗布泊一声巨响，蘑菇云起来了。从原子弹到氢弹，美国用了七年多，苏联四年，中国两年零八个月。
+
+这期间他母亲病危，他没能回去送终。父亲到死都不知道儿子在干什么。
+
+1979年一次空投试验失败，核弹落地没炸，摔碎了。防化兵没找到弹体，他执意自己进爆区找。碎片找到了，放射性物质也进了他的身体。体检报告出来，尿液里查出放射性，多项指标不对。
+
+1985年，确诊直肠癌。住院期间他仍在写建议书——关于中国核武器发展的建议，和于敏一起署的名。这份建议书的内容，到今天还在保密。
+
+1986年6月，老朋友杨振宁去医院看他，问他：搞出原子弹、氢弹，国家给了你多少奖金？他伸出两根手指：原子弹十块，氢弹十块。
+
+同月，报纸公开报道"两弹元勋邓稼先"。这是他的名字第一次见报。一个月后，他去世了，六十二岁。临终前他问身边的人：再过三十年，还会有人记得我们吗？`,
+    related: ['a19', 'a15', 'a7']
+  }
+];
+
+// 4个主题 · 星图节点位置
+const THEMES = [
+  { id: 'adventure', name: '冒 险', pos: [140, 120] },
+  { id: 'solitude',  name: '孤 独', pos: [470, 90] },
+  { id: 'courage',   name: '勇 气', pos: [600, 290] },
+  { id: 'secret',    name: '秘 密', pos: [230, 310] }
+];
+
+// 5种文体印章
+const FORMS = ['小说', '历史', '科普', '诗歌', '传记'];
+
+// ============================================================
+// localStorage 持久化
+// ============================================================
+const LS_KEY = 'reading_quest_v1';
+
+function loadAll() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+function saveAll(data) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(data)); }
+  catch (e) { console.warn('localStorage 保存失败', e); }
+}
+
+// 全局状态
+let state = {
+  users: [],          // [{id, name}]
+  currentUserId: null,
+  reads: {}           // userId -> { articleId: true }
+};
+
+function loadState() {
+  const data = loadAll();
+  state.users = data.users || [];
+  state.currentUserId = data.currentUserId || null;
+  state.reads = data.reads || {};
+}
+function saveState() {
+  saveAll({ users: state.users, currentUserId: state.currentUserId, reads: state.reads });
+}
+
+function getUserReads() {
+  if (!state.currentUserId) return {};
+  if (!state.reads[state.currentUserId]) state.reads[state.currentUserId] = {};
+  return state.reads[state.currentUserId];
+}
+function isRead(articleId) { return !!getUserReads()[articleId]; }
+function isThemeLit(themeId) {
+  const arts = ARTICLES.filter(a => a.theme === themeId);
+  if (arts.length === 0) return false;
+  return arts.every(a => isRead(a.id));
+}
+function countLitThemes() { return THEMES.filter(t => isThemeLit(t.id)).length; }
+
+// ============================================================
+// 视图切换
+// ============================================================
+function switchView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(viewId).classList.add('active');
+
+  const topbar = document.getElementById('topbar');
+  if (viewId === 'view-launch') {
+    topbar.classList.remove('visible');
+  } else {
+    topbar.classList.add('visible');
+    const u = state.users.find(x => x.id === state.currentUserId);
+    document.getElementById('current-user-name').textContent = u ? u.name : '—';
+  }
+
+  document.querySelectorAll('#topbar .icon-btn').forEach(b => b.classList.remove('active'));
+  if (viewId === 'view-map')      document.getElementById('btn-map').classList.add('active');
+  else if (viewId === 'view-ranking')  document.getElementById('btn-ranking').classList.add('active');
+  else if (viewId === 'view-passport') document.getElementById('btn-passport').classList.add('active');
+
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+// ============================================================
+// 启动屏 · 多用户切换
+// ============================================================
+function hashHue(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  return h % 360;
+}
+
+function renderUsers() {
+  const grid = document.getElementById('users-grid');
+  grid.innerHTML = '';
+
+  state.users.forEach(u => {
+    const div = document.createElement('div');
+    div.className = 'user-slot';
+    const initial = u.name.slice(0, 1).toUpperCase();
+    const hue = hashHue(u.name);
+    div.innerHTML = `
+      <div class="avatar" style="background:hsl(${hue},28%,16%);border-color:hsl(${hue},28%,32%);color:hsl(${hue},40%,82%)">${initial}</div>
+      <div class="name">${u.name}</div>
+    `;
+    div.addEventListener('click', () => {
+      state.currentUserId = u.id;
+      saveState();
+      switchView('view-map');
+      renderMap();
+    });
+    grid.appendChild(div);
+  });
+
+  if (state.users.length < 6) {
+    const add = document.createElement('div');
+    add.className = 'user-slot add';
+    add.innerHTML = `<div class="avatar">+</div><div class="name">新旅人</div>`;
+    add.addEventListener('click', () => {
+      document.getElementById('add-user-modal').classList.add('open');
+      setTimeout(() => document.getElementById('new-user-input').focus(), 50);
+    });
+    grid.appendChild(add);
+  }
+}
+
+// ============================================================
+// 探索地图
+// ============================================================
+function renderMap() {
+  document.getElementById('lit-count').textContent = countLitThemes();
+  document.getElementById('lit-total').textContent = THEMES.length;
+
+  const svg = document.getElementById('star-svg');
+  svg.innerHTML = '';
+  const ns = 'http://www.w3.org/2000/svg';
+
+  // 节点间弱连接线（虚线）
+  for (let i = 0; i < THEMES.length; i++) {
+    for (let j = i + 1; j < THEMES.length; j++) {
+      const a = THEMES[i], b = THEMES[j];
+      const line = document.createElementNS(ns, 'line');
+      line.setAttribute('x1', a.pos[0]); line.setAttribute('y1', a.pos[1]);
+      line.setAttribute('x2', b.pos[0]); line.setAttribute('y2', b.pos[1]);
+      line.setAttribute('stroke', '#2a2825');
+      line.setAttribute('stroke-width', '1');
+      line.setAttribute('stroke-dasharray', '2 5');
+      svg.appendChild(line);
+    }
+  }
+
+  // 节点
+  THEMES.forEach(r => {
+    const lit = isThemeLit(r.id);
+    const g = document.createElementNS(ns, 'g');
+    g.setAttribute('class', 'star-node' + (lit ? ' lit' : ''));
+    g.setAttribute('data-theme', r.id);
+    g.setAttribute('transform', `translate(${r.pos[0]},${r.pos[1]})`);
+
+    const cnt = ARTICLES.filter(a => a.theme === r.id).length;
+    g.innerHTML = `
+      <circle class="outer" r="30"/>
+      <circle class="inner" r="5"/>
+      <text class="region-name" y="54">${r.name}</text>
+      <text class="region-count" y="72">${cnt} 篇</text>
+    `;
+    g.addEventListener('click', () => openTheme(r.id));
+    svg.appendChild(g);
+  });
+
+  document.getElementById('region-panel').classList.remove('open');
+
+  // 事件委托兜底：SVG 元素事件冒泡保险
+  svg.addEventListener('click', (e) => {
+    let node = e.target;
+    while (node && node !== svg) {
+      if (node.classList && node.classList.contains('star-node')) {
+        openTheme(node.dataset.theme);
+        return;
+      }
+      node = node.parentNode;
+    }
+  });
+}
+
+function openTheme(themeId) {
+  const theme = THEMES.find(t => t.id === themeId);
+  const arts = ARTICLES.filter(a => a.theme === themeId);
+  document.getElementById('region-title').textContent = theme.name + ' · ' + arts.length + ' 篇';
+
+  const container = document.getElementById('region-articles');
+  container.innerHTML = '';
+  arts.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'article-row' + (isRead(a.id) ? ' read' : '');
+    div.innerHTML = `
+      <div class="meta">
+        <div class="title">${a.title}</div>
+        <div class="form">${a.form}</div>
+      </div>
+      <div class="word-count">${a.wordCount} 字</div>
+    `;
+    div.addEventListener('click', () => openArticle(a.id));
+    container.appendChild(div);
+  });
+
+  const panel = document.getElementById('region-panel');
+  panel.classList.add('open');
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+
+// ============================================================
+// 文章详情 · 关联跳转
+// ============================================================
+function openArticle(articleId) {
+  const a = ARTICLES.find(x => x.id === articleId);
+  if (!a) return;
+
+  const read = isRead(a.id);
+  const container = document.getElementById('article-container');
+
+  const paragraphs = a.content.split('\n\n').map(p => p.trim()).filter(Boolean);
+  const bodyHTML = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+
+  const relatedHTML = a.related.map(rid => {
+    const r = ARTICLES.find(x => x.id === rid);
+    if (!r) return '';
+    return `
+      <div class="related-item" data-id="${r.id}">
+        <div>
+          <div class="title">${r.title}</div>
+          <div class="form">${r.form}</div>
+        </div>
+        <div class="arrow">→</div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="article-meta">
+      <span class="form">${a.form}</span>
+      <span>${a.wordCount} 字</span>
+      <span>约 ${Math.ceil(a.wordCount / 300)} 分钟</span>
+    </div>
+    <h1 class="article-title">${a.title}</h1>
+    <div class="article-body">${bodyHTML}</div>
+    <div class="article-actions">
+      <button class="btn-light ${read ? 'lit' : ''}" id="btn-light" data-id="${a.id}">
+        ${read ? '已 点 亮' : '读 完 · 点 亮 此 文'}
+      </button>
+    </div>
+    <div class="related">
+      <div class="related-label">— 关 联 探 索 —</div>
+      <div class="related-list">${relatedHTML}</div>
+    </div>
+  `;
+
+  if (!read) {
+    document.getElementById('btn-light').addEventListener('click', (e) => {
+      const id = e.currentTarget.dataset.id;
+      const reads = getUserReads();
+      reads[id] = true;
+      saveState();
+      openArticle(id);
+      renderMap();
+    });
+  }
+
+  container.querySelectorAll('.related-item').forEach(el => {
+    el.addEventListener('click', () => openArticle(el.dataset.id));
+  });
+
+  switchView('view-article');
+}
+
+// ============================================================
+// 探索榜 · 按主题点亮数排名
+// ============================================================
+function renderRanking() {
+  const list = document.getElementById('ranking-list');
+  list.innerHTML = '';
+
+  if (state.users.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--fg-3);padding:48px 0;font-family:var(--font-mono);font-size:12px;letter-spacing:0.2em;">还 没 有 旅 人</div>';
+    return;
+  }
+
+  const ranked = state.users.map(u => {
+    const reads = state.reads[u.id] || {};
+    const readCount = Object.keys(reads).filter(k => reads[k]).length;
+    const litCount = THEMES.filter(r => {
+      const arts = ARTICLES.filter(a => a.theme === r.id);
+      return arts.length > 0 && arts.every(a => reads[a.id]);
+    }).length;
+    return { ...u, readCount, litCount };
+  }).sort((a, b) => b.litCount - a.litCount || b.readCount - a.readCount);
+
+  ranked.forEach((u, i) => {
+    const div = document.createElement('div');
+    div.className = 'rank-row' + (i < 3 ? ' top' : '') + (u.id === state.currentUserId ? ' me' : '');
+    const numStr = (i < 3 ? '0' : '') + (i + 1);
+    div.innerHTML = `
+      <div class="num">${numStr}</div>
+      <div class="name">${u.name}${u.id === state.currentUserId ? ' · 我' : ''}</div>
+      <div class="stats">点亮 <strong>${u.litCount}</strong> / ${THEMES.length}</div>
+      <div class="stats">读 <strong>${u.readCount}</strong> 篇</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ============================================================
+// 护照 · 文体印章
+// ============================================================
+function renderPassport() {
+  const grid = document.getElementById('stamp-grid');
+  grid.innerHTML = '';
+
+  const reads = getUserReads();
+
+  FORMS.forEach(form => {
+    const matched = ARTICLES.filter(a => a.form.includes(form));
+    const readCount = matched.filter(a => reads[a.id]).length;
+    const collected = matched.length > 0 && readCount === matched.length;
+
+    const div = document.createElement('div');
+    div.className = 'stamp' + (collected ? ' collected' : '');
+    div.innerHTML = `
+      <div class="seal">${form.slice(0, 1)}</div>
+      <div class="form-name">${form}</div>
+      <div class="count">${readCount} / ${matched.length}</div>
+    `;
+    grid.appendChild(div);
+  });
+
+  const list = document.getElementById('passport-list');
+  list.innerHTML = '';
+  const readArts = ARTICLES.filter(a => reads[a.id]);
+
+  if (readArts.length === 0) {
+    list.innerHTML = '<div class="passport-row empty">尚 未 收 集 任 何 文 章</div>';
+    return;
+  }
+
+  readArts.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'passport-row';
+    div.innerHTML = `
+      <div>
+        <div class="value">${a.title}</div>
+        <div class="label">${a.form} · ${a.wordCount}字</div>
+      </div>
+      <div class="label">已 收</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ============================================================
+// 添加用户模态
+// ============================================================
+function setupAddUser() {
+  const modal = document.getElementById('add-user-modal');
+  const input = document.getElementById('new-user-input');
+
+  document.getElementById('cancel-add').addEventListener('click', () => {
+    modal.classList.remove('open');
+    input.value = '';
+  });
+  document.getElementById('confirm-add').addEventListener('click', () => {
+    const name = input.value.trim();
+    if (!name) return;
+    const id = 'u' + Date.now();
+    state.users.push({ id, name });
+    state.currentUserId = id;
+    state.reads[id] = {};
+    saveState();
+    modal.classList.remove('open');
+    input.value = '';
+    switchView('view-map');
+    renderMap();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('confirm-add').click();
+    if (e.key === 'Escape') { modal.classList.remove('open'); input.value = ''; }
+  });
+
+  // 事件委托兜底：防止某些环境下元素级监听失效
+  document.addEventListener('click', (e) => {
+    const slot = e.target.closest('.user-slot.add');
+    if (slot && !modal.classList.contains('open')) {
+      modal.classList.add('open');
+      setTimeout(() => input.focus(), 50);
+    }
+  });
+}
+
+// ============================================================
+// 顶部导航
+// ============================================================
+function setupTopbar() {
+  document.getElementById('btn-home').addEventListener('click', () => {
+    state.currentUserId = null;
+    saveState();
+    switchView('view-launch');
+    renderUsers();
+  });
+  document.getElementById('btn-map').addEventListener('click', () => {
+    switchView('view-map');
+    renderMap();
+  });
+  document.getElementById('btn-ranking').addEventListener('click', () => {
+    switchView('view-ranking');
+    renderRanking();
+  });
+  document.getElementById('btn-passport').addEventListener('click', () => {
+    switchView('view-passport');
+    renderPassport();
+  });
+}
+
+// ============================================================
+// 初始化
+// ============================================================
+function init() {
+  loadState();
+  setupTopbar();
+  setupAddUser();
+  renderUsers();
+
+  if (state.currentUserId && state.users.find(u => u.id === state.currentUserId)) {
+    switchView('view-map');
+    renderMap();
+  } else {
+    switchView('view-launch');
+  }
+}
+
+init();
+</script>
+
+
+</body></html>
